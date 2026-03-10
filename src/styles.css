@@ -1,13 +1,31 @@
 :root {
-  --bg-1: #0b1120;
-  --bg-2: #111a31;
-  --card: rgba(18, 27, 52, 0.88);
-  --card-border: rgba(98, 127, 194, 0.4);
-  --text: #ecf1ff;
-  --muted: #9eb0dc;
+  --bg: #f4f7fb;
+  --bg-soft: #eef3fa;
+  --card: #ffffff;
+  --card-border: #d8e3f3;
+  --text: #1f2d3d;
+  --muted: #5c708f;
+  --accent: #2f7cf6;
+  --accent-strong: #2569d0;
+  --ok: #1ea76f;
+  --input-bg: #ffffff;
+  --input-border: #c8d8ee;
+  --preview-border: #d6e2f3;
+}
+
+body[data-mode='dark'] {
+  --bg: #0f1728;
+  --bg-soft: #131f36;
+  --card: rgba(20, 31, 55, 0.92);
+  --card-border: #3a4f7c;
+  --text: #e9f0ff;
+  --muted: #9db0d5;
   --accent: #6ea8fe;
-  --accent-strong: #4f8df2;
-  --ok: #3bd48f;
+  --accent-strong: #4c88eb;
+  --ok: #38d392;
+  --input-bg: #101b35;
+  --input-border: #3b5187;
+  --preview-border: #3b5187;
 }
 
 * { box-sizing: border-box; }
@@ -16,17 +34,16 @@ body {
   margin: 0;
   color: var(--text);
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "PingFang SC", "Microsoft YaHei", sans-serif;
-  background: radial-gradient(circle at 80% -20%, #233765 0%, transparent 35%),
-              radial-gradient(circle at -20% 120%, #1f2f56 0%, transparent 32%),
-              linear-gradient(145deg, var(--bg-1), var(--bg-2));
+  background: linear-gradient(180deg, var(--bg), var(--bg-soft));
   min-height: 100vh;
+  transition: background .2s ease, color .2s ease;
 }
 
 .bg-glow {
   position: fixed;
   inset: 0;
   pointer-events: none;
-  background: linear-gradient(120deg, rgba(110, 168, 254, 0.05), rgba(85, 208, 255, 0.03));
+  background: radial-gradient(circle at 20% 0%, rgba(47,124,246,0.08), transparent 36%);
 }
 
 .wrap {
@@ -38,12 +55,16 @@ body {
 
 .hero {
   margin-bottom: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
 }
 
 .hero h1 {
   margin: 0;
   font-size: 24px;
-  letter-spacing: 0.3px;
+  letter-spacing: 0.2px;
 }
 
 .hero p {
@@ -66,14 +87,10 @@ body {
   min-height: 560px;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.2);
-  backdrop-filter: blur(4px);
+  box-shadow: 0 8px 24px rgba(17, 31, 62, 0.08);
 }
 
-.title {
-  font-weight: 700;
-  margin-bottom: 10px;
-}
+.title { font-weight: 700; margin-bottom: 10px; }
 
 .toolbar {
   display: flex;
@@ -83,39 +100,36 @@ body {
   align-items: center;
 }
 
-label {
-  color: var(--muted);
-  font-size: 13px;
-}
+label { color: var(--muted); font-size: 13px; }
 
 button,
 input[type=file],
 select {
-  border: 1px solid #39508c;
-  background: #172957;
-  color: #eef4ff;
+  border: 1px solid var(--input-border);
+  background: var(--input-bg);
+  color: var(--text);
   border-radius: 9px;
   padding: 8px 12px;
   font-size: 13px;
 }
 
-button {
-  cursor: pointer;
-  transition: all 0.18s ease;
-}
+button { cursor: pointer; transition: all 0.15s ease; }
 
 button:hover,
 select:hover,
 input[type=file]:hover {
-  background: #1f3670;
-  border-color: #5f82d1;
+  border-color: var(--accent);
 }
 
 button.primary {
   background: linear-gradient(180deg, var(--accent), var(--accent-strong));
-  color: #06193f;
-  border-color: #89b7ff;
+  color: #fff;
+  border-color: transparent;
   font-weight: 700;
+}
+
+button.ghost {
+  background: transparent;
 }
 
 .status {
@@ -131,9 +145,9 @@ textarea {
   height: 100%;
   min-height: 420px;
   resize: vertical;
-  background: #0d1838;
-  color: #edf3ff;
-  border: 1px solid #334b88;
+  background: var(--input-bg);
+  color: var(--text);
+  border: 1px solid var(--input-border);
   border-radius: 10px;
   padding: 14px;
   font-size: 14px;
@@ -142,8 +156,8 @@ textarea {
 }
 
 textarea:focus {
-  border-color: #7aa8ff;
-  box-shadow: 0 0 0 3px rgba(110, 168, 254, 0.15);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(47,124,246,0.14);
 }
 
 .preview {
@@ -152,18 +166,15 @@ textarea:focus {
   color: #222;
   border-radius: 10px;
   padding: 18px;
-  border: 1px solid #334b88;
+  border: 1px solid var(--preview-border);
   min-height: 420px;
 }
 
-.help {
-  font-size: 12px;
-  color: var(--muted);
-  margin-top: 8px;
-}
+.help { font-size: 12px; color: var(--muted); margin-top: 8px; }
 
 @media (max-width: 980px) {
   .grid { grid-template-columns: 1fr; }
   .panel { min-height: auto; }
   .status { margin-left: 0; width: 100%; }
+  .hero { flex-direction: column; align-items: flex-start; }
 }

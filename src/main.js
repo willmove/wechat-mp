@@ -4,6 +4,7 @@ const statusEl = document.getElementById('status');
 const fileInput = document.getElementById('fileInput');
 const themeSelect = document.getElementById('themeSelect');
 const fontScaleSelect = document.getElementById('fontScaleSelect');
+const modeToggleBtn = document.getElementById('modeToggleBtn');
 
 marked.setOptions({ breaks: true, gfm: true });
 
@@ -46,7 +47,7 @@ const themes = {
       li: 'margin:6px 0;',
       a: 'color:#1456c5;text-decoration:none;border-bottom:1px dashed #7aa2ff;',
       img: 'max-width:100%;display:block;margin:18px auto;border-radius:8px;box-shadow:0 2px 10px rgba(0,0,0,.08);',
-      pre: 'background:#0f172a;color:#e6edf3;border-radius:8px;padding:12px;overflow:auto;line-height:1.65;font-size:12px;',
+      pre: 'background:#eef6ff;color:#1b3f75;border:1px solid #cfe2ff;border-radius:8px;padding:12px;overflow:auto;line-height:1.65;font-size:12px;',
       code: 'background:#eef4ff;padding:2px 6px;border-radius:4px;font-size:90%;font-family:Menlo,Consolas,monospace;color:#174ea6;',
       table: 'border-collapse:collapse;width:100%;margin:12px 0;font-size:12px;',
       th: 'border:1px solid #d3e3ff;padding:8px;background:#edf3ff;text-align:left;color:#1d3f6f;',
@@ -174,6 +175,20 @@ async function copyRichHtml(html) {
 document.getElementById('convertBtn').addEventListener('click', render);
 themeSelect.addEventListener('change', render);
 fontScaleSelect.addEventListener('change', render);
+
+function applyMode(mode) {
+  const safeMode = mode === 'light' ? 'light' : 'dark';
+  document.body.setAttribute('data-mode', safeMode);
+  modeToggleBtn.textContent = safeMode === 'dark' ? '切到浅色模式' : '切到深色模式';
+  localStorage.setItem('ui-mode', safeMode);
+}
+
+const savedMode = localStorage.getItem('ui-mode');
+applyMode(savedMode || 'light');
+modeToggleBtn.addEventListener('click', () => {
+  const current = document.body.getAttribute('data-mode') || 'light';
+  applyMode(current === 'light' ? 'dark' : 'light');
+});
 
 markdownEl.addEventListener('input', () => {
   clearTimeout(window.__renderTimer);
