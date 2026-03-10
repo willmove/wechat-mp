@@ -8,9 +8,13 @@
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 </head>
 <body>
+  <div class="bg-glow"></div>
   <div class="wrap">
-    <h1>Markdown → 微信公众号编辑器格式</h1>
-    <div class="tip">支持粘贴/上传 Markdown，一键复制后直接粘贴到公众号草稿箱，样式不乱。</div>
+    <header class="hero">
+      <h1>Markdown → 微信公众号编辑器格式</h1>
+      <p>粘贴/上传 Markdown，选择模板与字号，一键复制到公众号草稿箱。</p>
+    </header>
+
     <div class="grid">
       <section class="panel">
         <div class="title">Markdown 输入</div>
@@ -22,21 +26,30 @@
         </div>
         <textarea id="markdown" placeholder="在这里粘贴 Markdown 文本..."></textarea>
       </section>
+
       <section class="panel">
         <div class="title">公众号预览（内联样式）</div>
         <div class="toolbar">
-          <label for="themeSelect">模板：</label>
+          <label for="themeSelect">模板</label>
           <select id="themeSelect">
             <option value="simple">简洁</option>
             <option value="tech">科技</option>
             <option value="edu">教育</option>
             <option value="news">新闻</option>
           </select>
+
+          <label for="fontScaleSelect">字号</label>
+          <select id="fontScaleSelect">
+            <option value="0">默认</option>
+            <option value="1">小一号</option>
+            <option value="2">小两号</option>
+          </select>
+
           <button id="convertBtn">转换</button>
           <button id="copyBtn" class="primary">一键复制到公众号</button>
         </div>
         <div id="preview" class="preview"></div>
-        <div class="help">复制后请直接粘贴到微信公众号编辑器（草稿箱）。若内容较长，建议分段粘贴。</div>
+        <div class="help">提示：若公众号编辑器内容较长，建议分段粘贴，稳定性更好。</div>
       </section>
     </div>
   </div>

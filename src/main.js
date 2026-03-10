@@ -3,6 +3,7 @@ const previewEl = document.getElementById('preview');
 const statusEl = document.getElementById('status');
 const fileInput = document.getElementById('fileInput');
 const themeSelect = document.getElementById('themeSelect');
+const fontScaleSelect = document.getElementById('fontScaleSelect');
 
 marked.setOptions({ breaks: true, gfm: true });
 
@@ -99,17 +100,28 @@ const themes = {
   }
 };
 
-function applyInlineStyles(container, styleMap) {
+function scaledStyle(styleText, step = 0) {
+  if (!step) return styleText;
+  return styleText.replace(/font-size:(\d+)px/g, (_, n) => {
+    const base = Number(n);
+    const scaled = Math.max(base - step * 2, 11);
+    return `font-size:${scaled}px`;
+  });
+}
+
+function applyInlineStyles(container, styleMap, scaleStep = 0) {
   Object.entries(styleMap).forEach(([tag, style]) => {
+    const styleWithScale = scaledStyle(style, scaleStep);
     container.querySelectorAll(tag).forEach(el => {
       const prev = el.getAttribute('style') || '';
-      el.setAttribute('style', prev ? `${prev};${style}` : style);
+      el.setAttribute('style', prev ? `${prev};${styleWithScale}` : styleWithScale);
     });
   });
 }
 
 function sanitizeForWechat(html) {
   const theme = themes[themeSelect.value] || themes.simple;
+  const scaleStep = Number(fontScaleSelect?.value || 0);
   const doc = new DOMParser().parseFromString(`<section>${html}</section>`, 'text/html');
   const root = doc.body.firstElementChild;
   root.setAttribute('style', theme.section);
@@ -122,7 +134,7 @@ function sanitizeForWechat(html) {
     });
   });
 
-  applyInlineStyles(root, theme.styles);
+  applyInlineStyles(root, theme.styles, scaleStep);
   return root.outerHTML;
 }
 
@@ -132,9 +144,14 @@ function render() {
   const html = sanitizeForWechat(rawHtml);
   previewEl.innerHTML = html;
   previewEl.dataset.html = html;
-  statusEl.textContent = md.trim()
-    ? `已转换（模板：${themeSelect.options[themeSelect.selectedIndex].text}）`
-    : '';
+
+  if (md.trim()) {
+    const themeName = themeSelect.options[themeSelect.selectedIndex].text;
+    const sizeName = fontScaleSelect.options[fontScaleSelect.selectedIndex].text;
+    statusEl.textContent = `已转换（${themeName}｜${sizeName}）`;
+  } else {
+    statusEl.textContent = '';
+  }
 }
 
 async function copyRichHtml(html) {
@@ -156,6 +173,7 @@ async function copyRichHtml(html) {
 
 document.getElementById('convertBtn').addEventListener('click', render);
 themeSelect.addEventListener('change', render);
+fontScaleSelect.addEventListener('change', render);
 
 markdownEl.addEventListener('input', () => {
   clearTimeout(window.__renderTimer);
