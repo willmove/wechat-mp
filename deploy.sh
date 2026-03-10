@@ -4,7 +4,7 @@ set -euo pipefail
 SRC_DIR="$(cd "$(dirname "$0")" && pwd)"
 DEST_DIR="/var/www/wechat-mp"
 
-rsync -av --delete \
+rsync -av --delete --delete-excluded \
   --exclude '.git/' \
   --exclude '.gitignore' \
   --exclude 'README.md' \
