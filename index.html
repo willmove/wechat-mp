@@ -4,7 +4,18 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Markdown 转微信公众号格式</title>
-  <link rel="stylesheet" href="./src/styles.css" />
+  <script>
+    (function () {
+      var path = window.location.pathname || '/';
+      var base = path.endsWith('/index.html') ? path.slice(0, -'index.html'.length) : path;
+      if (!base.endsWith('/')) base += '/';
+      window.__APP_BASE__ = base;
+      var css = document.createElement('link');
+      css.rel = 'stylesheet';
+      css.href = base + 'src/styles.css';
+      document.head.appendChild(css);
+    })();
+  </script>
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 </head>
 <body>
@@ -61,6 +72,8 @@
     </div>
   </div>
 
-  <script src="./src/main.js"></script>
+  <script>
+    document.write('<script src="' + (window.__APP_BASE__ || './') + 'src/main.js"><\\/script>');
+  </script>
 </body>
 </html>
