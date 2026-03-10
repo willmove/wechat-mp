@@ -40,10 +40,13 @@ python3 -m http.server 8080
 
 说明：页面内置了自动 base-path 识别逻辑，会根据当前 URL 自动拼接资源路径，因此既可直接本地静态预览，也可部署到 `/wechat-mp` 这类子路径下访问。
 
-发布方式（手动同步）：
+发布方式（推荐）：
 
 ```bash
-sudo rsync -av --delete /root/.openclaw/workspace/projects/wechat-mp/ /var/www/wechat-mp/
+cd /root/.openclaw/workspace/projects/wechat-mp
+./deploy.sh
 ```
+
+脚本会自动排除 `.git/`、`.gitignore`、`README.md`、`deploy.sh` 等不需要上线的文件。
 
 > 注意：线上 Caddy 已配置 `https://app.willmove.cn/wechat-mp`。
