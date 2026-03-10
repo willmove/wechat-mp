@@ -4,14 +4,13 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Markdown 转微信公众号格式</title>
-    <link rel="stylesheet" href="./src/styles.css" />
-
+  <link rel="stylesheet" href="./src/styles.css" />
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 </head>
 <body>
   <div class="wrap">
     <h1>Markdown → 微信公众号编辑器格式</h1>
-    <div class="tip">支持粘贴/上传 Markdown，一键复制后直接粘贴到公众号草稿箱，样式更稳。</div>
+    <div class="tip">支持粘贴/上传 Markdown，一键复制后直接粘贴到公众号草稿箱，样式不乱。</div>
     <div class="grid">
       <section class="panel">
         <div class="title">Markdown 输入</div>
@@ -26,16 +25,8 @@
       <section class="panel">
         <div class="title">公众号预览（内联样式）</div>
         <div class="toolbar">
-          <label for="themeSelect">模板：</label>
-          <select id="themeSelect">
-            <option value="simple">简洁</option>
-            <option value="tech">科技</option>
-            <option value="edu">教育</option>
-            <option value="news">新闻</option>
-          </select>
           <button id="convertBtn">转换</button>
           <button id="copyBtn" class="primary">一键复制到公众号</button>
-          <button id="cleanBtn">清理微信残留样式</button>
         </div>
         <div id="preview" class="preview"></div>
         <div class="help">复制后请直接粘贴到微信公众号编辑器（草稿箱）。若内容较长，建议分段粘贴。</div>
@@ -43,29 +34,6 @@
     </div>
   </div>
 
-  <script>
-    const markdownEl = document.getElementById('markdown');
-    const previewEl = document.getElementById('preview');
-    const statusEl = document.getElementById('status');
-    const fileInput = document.getElementById('fileInput');
-    const themeSelect = document.getElementById('themeSelect');
-
-    marked.setOptions({ breaks: true, gfm: true });
-
-    const themes = {
-      simple: {
-        section: 'font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;word-break:break-word;color:#222;',
-        styles: {
-          h1: 'font-size:26px;line-height:1.6;font-weight:700;margin:24px 0 16px;color:#111;',
-          h2: 'font-size:22px;line-height:1.6;font-weight:700;margin:22px 0 14px;color:#111;',
-          h3: 'font-size:19px;line-height:1.6;font-weight:700;margin:20px 0 12px;color:#222;',
-          h4: 'font-size:17px;line-height:1.6;font-weight:700;margin:16px 0 10px;color:#222;',
-          h5: 'font-size:16px;line-height:1.6;font-weight:700;margin:14px 0 8px;color:#333;',
-          h6: 'font-size:15px;line-height:1.6;font-weight:700;margin:12px 0 8px;color:#333;',
-          p: 'font-size:16px;line-height:1.85;margin:10px 0;color:#222;text-align:justify;',
-          blockquote: 'margin:14px 0;padding:10px 14px;border-left:4px solid #3e7bfa;background:#f4f7ff;color:#3a4a77;font-size:15px;line-height:1.8;',
-          ul: 'margin:10px 0;padding-left:24px;line-height:1.85;color:#222;font-size:16px;',
-          ol: 'margin:10px 0;padding-left:24px;line-height:1.85;color:#222;font-size:16px;',
-          li: 'margin:6px 0;',
-          a: 'color:#276ef1;text-decoration:none;border-bottom:1px solid #8eb2ff;',
-          img: 'max-width:100%  <script src="./src/main.js"></script>
+  <script src="./src/main.js"></script>
+</body>
+</html>
