@@ -38,6 +38,8 @@ python3 -m http.server 8080
 
 - `/var/www/wechat-mp`
 
+说明：页面资源使用相对路径，既可直接本地静态预览，也可部署到 `/wechat-mp` 子路径下访问。
+
 发布方式（手动同步）：
 
 ```bash
