@@ -28,7 +28,7 @@ wechat-mp/
 
 ```bash
 cd /root/.openclaw/workspace/projects/wechat-mp
-python3 -m http.server 8080
+python3 -m http.server 8080 # or python -m http.server 8080
 # 然后访问 http://127.0.0.1:8080
 ```
 
@@ -43,7 +43,7 @@ python3 -m http.server 8080
 发布方式（手动同步）：
 
 ```bash
-sudo rsync -av --delete /root/.openclaw/workspace/projects/wechat-mp/ /var/www/wechat-mp/
+sudo rsync -av --delete /path/to/your/projects/wechat-mp/ /var/www/wechat-mp/
 ```
 
-> 注意：线上 Caddy 已配置 `https://app.willmove.cn/wechat-mp`。
+> 注意：线上 Caddy 可配置 `https://app.yourdomain.com/wechat-mp`。

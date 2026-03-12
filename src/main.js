@@ -3,7 +3,11 @@ const previewEl = document.getElementById('preview');
 const statusEl = document.getElementById('status');
 const fileInput = document.getElementById('fileInput');
 const themeSelect = document.getElementById('themeSelect');
-const fontScaleSelect = document.getElementById('fontScaleSelect');
+const fontScaleSelect = null; // removed, replaced by +/- buttons
+let fontSizeOffset = 0; // px offset from default, can be negative or positive
+const fontSizeLabel = document.getElementById('fontSizeLabel');
+const fontSizeDown = document.getElementById('fontSizeDown');
+const fontSizeUp = document.getElementById('fontSizeUp');
 const modeToggleBtn = document.getElementById('modeToggleBtn');
 
 marked.setOptions({ breaks: true, gfm: true });
@@ -32,17 +36,20 @@ const themes = {
   }},
   night: { section: 'font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;word-break:break-word;color:#cbd5ff;background:#0f1220;padding:14px;border-radius:12px;', styles: {
     h1:'font-size:27px;line-height:1.5;font-weight:800;margin:24px 0 14px;color:#9ec5ff;',h2:'font-size:22px;line-height:1.55;font-weight:700;margin:20px 0 12px;color:#84f0ff;',h3:'font-size:18px;line-height:1.6;font-weight:700;margin:16px 0 10px;color:#b9a3ff;',h4:'font-size:16px;line-height:1.6;font-weight:700;margin:14px 0 8px;color:#b9a3ff;',p:'font-size:15px;line-height:1.95;margin:12px 0;color:#d5dbff;text-align:justify;',blockquote:'margin:16px 0;padding:12px 14px;border-left:4px solid #7c8cff;background:#171b2f;color:#aebcff;font-size:14px;line-height:1.85;',ul:'margin:10px 0;padding-left:24px;line-height:1.9;color:#d5dbff;font-size:15px;',ol:'margin:10px 0;padding-left:24px;line-height:1.9;color:#d5dbff;font-size:15px;',li:'margin:6px 0;',a:'color:#7de3ff;text-decoration:none;border-bottom:1px dashed #7de3ff;',img:'max-width:100%;display:block;margin:20px auto;border-radius:10px;box-shadow:0 0 0 1px #2c3255,0 8px 24px rgba(0,0,0,.35);',pre:'background:#171b2f;border:1px solid #2f3763;border-radius:8px;padding:12px;overflow:auto;line-height:1.65;font-size:12px;color:#d6e0ff;',code:'background:#23294a;padding:2px 6px;border-radius:4px;font-size:90%;font-family:Menlo,Consolas,monospace;color:#9ec5ff;',table:'border-collapse:collapse;width:100%;margin:12px 0;font-size:12px;',th:'border:1px solid #2f3763;padding:8px;background:#1f2440;text-align:left;color:#9ec5ff;',td:'border:1px solid #2f3763;padding:8px;color:#d5dbff;',hr:'border:none;border-top:1px solid #2f3763;margin:24px 0;'
+  }},
+  elegant: { section: 'font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;word-break:break-word;color:#333;', styles: {
+    h1:'font-size:24px;line-height:1.6;font-weight:800;margin:56px 0 32px;color:#1a1a1a;text-align:center;',h2:'font-size:20px;line-height:1.6;font-weight:700;margin:48px 0 28px;color:#1a1a1a;text-align:center;',h3:'font-size:17px;line-height:1.6;font-weight:700;margin:40px 0 22px;color:#1a1a1a;text-align:center;',h4:'font-size:15px;line-height:1.6;font-weight:700;margin:32px 0 18px;color:#333;text-align:center;',h5:'font-size:14px;line-height:1.6;font-weight:700;margin:26px 0 14px;color:#333;text-align:center;',h6:'font-size:13px;line-height:1.6;font-weight:700;margin:22px 0 12px;color:#444;text-align:center;',p:'font-size:15px;line-height:2;margin:16px 0;color:#333;text-align:justify;letter-spacing:.3px;',strong:'color:#1a6dcc;font-weight:700;',blockquote:'margin:20px 0;padding:14px 18px;border-left:4px solid #1a6dcc;background:#f0f6ff;color:#2c5a8f;font-size:14px;line-height:1.9;border-radius:0 8px 8px 0;',ul:'margin:14px 0;padding-left:24px;line-height:2;color:#333;font-size:15px;',ol:'margin:14px 0;padding-left:24px;line-height:2;color:#333;font-size:15px;list-style:none;counter-reset:li;',li:'margin:8px 0;',a:'color:#1a6dcc;text-decoration:none;border-bottom:1px solid #8cb8e8;',img:'max-width:100%;display:block;margin:24px auto;border-radius:8px;',pre:'background:#f5f7fa;border:1px solid #e0e6ef;border-radius:8px;padding:14px;overflow:auto;line-height:1.65;font-size:13px;',code:'background:#edf1f7;padding:2px 6px;border-radius:4px;font-size:90%;font-family:Menlo,Consolas,monospace;color:#1a6dcc;',table:'border-collapse:collapse;width:100%;margin:16px 0;font-size:13px;',th:'border:1px solid #d6e0ef;padding:10px;background:#f0f5ff;text-align:left;color:#1a4a7a;',td:'border:1px solid #d6e0ef;padding:10px;',hr:'border:none;border-top:1px solid #d6e0ef;margin:32px 0;'
   }}
 };
 
-function scaledStyle(styleText, step = 0) {
-  if (!step) return styleText;
-  return styleText.replace(/font-size:(\d+)px/g, (_, n) => `font-size:${Math.max(Number(n) - step * 2, 11)}px`);
+function scaledStyle(styleText, offset = 0) {
+  if (!offset) return styleText;
+  return styleText.replace(/font-size:(\d+)px/g, (_, n) => `font-size:${Math.max(Number(n) + offset, 9)}px`);
 }
 
-function applyInlineStyles(container, styleMap, scaleStep = 0) {
+function applyInlineStyles(container, styleMap, offset = 0) {
   Object.entries(styleMap).forEach(([tag, style]) => {
-    const styleWithScale = scaledStyle(style, scaleStep);
+    const styleWithScale = scaledStyle(style, offset);
     container.querySelectorAll(tag).forEach(el => {
       const prev = el.getAttribute('style') || '';
       el.setAttribute('style', prev ? `${prev};${styleWithScale}` : styleWithScale);
@@ -52,7 +59,7 @@ function applyInlineStyles(container, styleMap, scaleStep = 0) {
 
 function sanitizeForWechat(html) {
   const theme = themes[themeSelect.value] || themes.simple;
-  const scaleStep = Number(fontScaleSelect?.value || 0);
+  const offset = fontSizeOffset;
   const doc = new DOMParser().parseFromString(`<section>${html}</section>`, 'text/html');
   const root = doc.body.firstElementChild;
   root.setAttribute('style', theme.section);
@@ -63,7 +70,22 @@ function sanitizeForWechat(html) {
       if (n.startsWith('on') || n === 'class' || n === 'id') el.removeAttribute(attr.name);
     });
   });
-  applyInlineStyles(root, theme.styles, scaleStep);
+  applyInlineStyles(root, theme.styles, offset);
+  // Reset code styles inside pre blocks to avoid extra indentation
+  root.querySelectorAll('pre code').forEach(el => {
+    el.setAttribute('style', 'background:none;padding:0;border-radius:0;font-size:inherit;font-family:Menlo,Consolas,monospace;');
+  });
+  // For elegant theme: style ordered list numbers with colored counters
+  if (themeSelect.value === 'elegant') {
+    root.querySelectorAll('ol').forEach(ol => {
+      ol.setAttribute('style', (ol.getAttribute('style') || '') + ';list-style:none;padding-left:8px;');
+      ol.querySelectorAll(':scope > li').forEach((li, i) => {
+        const num = String(i + 1).padStart(2, '0');
+        const marker = `<span style="color:#1a6dcc;font-size:22px;font-weight:800;margin-right:8px;font-style:italic;">${num}.</span>`;
+        li.innerHTML = marker + li.innerHTML;
+      });
+    });
+  }
   return root.outerHTML;
 }
 
@@ -73,7 +95,7 @@ function render() {
   previewEl.innerHTML = html;
   previewEl.dataset.html = html;
   statusEl.textContent = md.trim()
-    ? `已转换（${themeSelect.options[themeSelect.selectedIndex].text}｜${fontScaleSelect.options[fontScaleSelect.selectedIndex].text}）`
+    ? `已转换（${themeSelect.options[themeSelect.selectedIndex].text}｜字号 ${fontSizeOffset >= 0 ? '+' : ''}${fontSizeOffset}）`
     : '';
 }
 
@@ -130,7 +152,16 @@ modeToggleBtn.addEventListener('contextmenu', (e) => {
 
 document.getElementById('convertBtn').addEventListener('click', render);
 themeSelect.addEventListener('change', render);
-fontScaleSelect.addEventListener('change', render);
+fontSizeDown.addEventListener('click', () => {
+  fontSizeOffset = Math.max(fontSizeOffset - 1, -6);
+  fontSizeLabel.textContent = fontSizeOffset;
+  render();
+});
+fontSizeUp.addEventListener('click', () => {
+  fontSizeOffset = Math.min(fontSizeOffset + 1, 6);
+  fontSizeLabel.textContent = fontSizeOffset;
+  render();
+});
 markdownEl.addEventListener('input', () => {
   clearTimeout(window.__renderTimer);
   window.__renderTimer = setTimeout(render, 250);
@@ -163,3 +194,20 @@ fileInput.addEventListener('change', async (e) => {
 });
 
 render();
+
+// ===== Phone/Desktop preview mode toggle =====
+const previewContainer = document.getElementById('previewContainer');
+const desktopModeBtn = document.getElementById('desktopModeBtn');
+const phoneModeBtn = document.getElementById('phoneModeBtn');
+
+desktopModeBtn.addEventListener('click', () => {
+  previewContainer.classList.remove('phone-mode');
+  desktopModeBtn.classList.add('active');
+  phoneModeBtn.classList.remove('active');
+});
+
+phoneModeBtn.addEventListener('click', () => {
+  previewContainer.classList.add('phone-mode');
+  phoneModeBtn.classList.add('active');
+  desktopModeBtn.classList.remove('active');
+});
