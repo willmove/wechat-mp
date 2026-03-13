@@ -119,10 +119,25 @@ function systemMode() {
   return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
 }
 
+const sunIcon = document.getElementById('sunIcon');
+const moonIcon = document.getElementById('moonIcon');
+const navbar = document.getElementById('navbar');
+
 function updateModeUi(mode) {
   document.body.setAttribute('data-mode', mode);
-  modeToggleBtn.textContent = mode === 'dark' ? '切到浅色模式' : '切到深色模式';
+  if (mode === 'dark') {
+    sunIcon.style.display = 'none';
+    moonIcon.style.display = 'block';
+  } else {
+    sunIcon.style.display = 'block';
+    moonIcon.style.display = 'none';
+  }
 }
+
+// Navbar scroll effect
+window.addEventListener('scroll', () => {
+  navbar.classList.toggle('scrolled', window.scrollY > 10);
+});
 
 function applyMode(mode, persist = true) {
   const safe = mode === 'dark' ? 'dark' : 'light';
