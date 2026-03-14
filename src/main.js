@@ -40,6 +40,9 @@ const themes = {
   }},
   elegant: { section: 'font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;word-break:break-word;color:#333;', styles: {
     h1:'font-size:24px;line-height:1.6;font-weight:800;margin:56px 0 32px;color:#1a1a1a;text-align:center;',h2:'font-size:20px;line-height:1.6;font-weight:700;margin:48px 0 28px;color:#1a1a1a;text-align:center;',h3:'font-size:17px;line-height:1.6;font-weight:700;margin:40px 0 22px;color:#1a1a1a;text-align:center;',h4:'font-size:15px;line-height:1.6;font-weight:700;margin:32px 0 18px;color:#333;text-align:center;',h5:'font-size:14px;line-height:1.6;font-weight:700;margin:26px 0 14px;color:#333;text-align:center;',h6:'font-size:13px;line-height:1.6;font-weight:700;margin:22px 0 12px;color:#444;text-align:center;',p:'font-size:15px;line-height:2;margin:16px 0;color:#333;text-align:justify;letter-spacing:.3px;',strong:'color:#1a6dcc;font-weight:700;',blockquote:'margin:20px 0;padding:14px 18px;border-left:4px solid #1a6dcc;background:#f0f6ff;color:#2c5a8f;font-size:14px;line-height:1.9;border-radius:0 8px 8px 0;',ul:'margin:14px 0;padding-left:24px;line-height:2;color:#333;font-size:15px;',ol:'margin:14px 0;padding-left:24px;line-height:2;color:#333;font-size:15px;list-style:none;counter-reset:li;',li:'margin:8px 0;',a:'color:#1a6dcc;text-decoration:none;border-bottom:1px solid #8cb8e8;',img:'max-width:100%;display:block;margin:24px auto;border-radius:8px;',pre:'background:#f5f7fa;border:1px solid #e0e6ef;border-radius:8px;padding:14px;overflow:auto;line-height:1.65;font-size:13px;',code:'background:#edf1f7;padding:2px 6px;border-radius:4px;font-size:90%;font-family:Menlo,Consolas,monospace;color:#1a6dcc;',table:'border-collapse:collapse;width:100%;margin:16px 0;font-size:13px;',th:'border:1px solid #d6e0ef;padding:10px;background:#f0f5ff;text-align:left;color:#1a4a7a;',td:'border:1px solid #d6e0ef;padding:10px;',hr:'border:none;border-top:1px solid #d6e0ef;margin:32px 0;'
+  }},
+  vivid: { section: 'font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;word-break:break-word;color:#333;', styles: {
+    h1:'font-size:22px;line-height:1.5;font-weight:800;margin:36px 0 22px;color:#fff;text-align:center;background:linear-gradient(135deg,#7c5cfc,#b07cfc);border-radius:10px;padding:10px 20px;display:block;',h2:'font-size:19px;line-height:1.5;font-weight:800;margin:32px 0 20px;color:#fff;text-align:center;background:linear-gradient(135deg,#7c5cfc,#b07cfc);border-radius:8px;padding:8px 18px;display:block;',h3:'font-size:16px;line-height:1.6;font-weight:700;margin:28px 0 14px;color:#7c5cfc;border-left:4px solid #b07cfc;padding-left:10px;',h4:'font-size:15px;line-height:1.6;font-weight:700;margin:22px 0 10px;color:#7c5cfc;',p:'font-size:15px;line-height:2.1;margin:18px 0;color:#333;text-align:justify;letter-spacing:.2px;',strong:'color:#7c5cfc;font-weight:700;',blockquote:'margin:20px 0;padding:14px 18px;border-left:4px solid #b07cfc;background:#f5f0ff;color:#5a3fa0;font-size:14px;line-height:1.95;border-radius:0 10px 10px 0;',ul:'margin:16px 0;padding-left:22px;line-height:2.1;color:#333;font-size:15px;',ol:'margin:16px 0;padding-left:22px;line-height:2.1;color:#333;font-size:15px;',li:'margin:8px 0;',a:'color:#7c5cfc;text-decoration:none;border-bottom:1px solid #c4a8ff;',img:'max-width:100%;display:block;margin:24px auto;border-radius:10px;box-shadow:0 4px 16px rgba(124,92,252,.15);',pre:'background:#f5f0ff;border:1px solid #ddd0ff;border-radius:8px;padding:14px;overflow:auto;line-height:1.65;font-size:12px;',code:'background:#ede8ff;padding:2px 6px;border-radius:4px;font-size:90%;font-family:Menlo,Consolas,monospace;color:#7c5cfc;',table:'border-collapse:collapse;width:100%;margin:16px 0;font-size:13px;',th:'border:1px solid #ddd0ff;padding:10px;background:#f0ebff;text-align:left;color:#5a3fa0;',td:'border:1px solid #ddd0ff;padding:10px;',hr:'border:none;border-top:2px dashed #c4a8ff;margin:28px 0;'
   }}
 };
 
@@ -96,6 +99,16 @@ function sanitizeForWechat(html) {
         const marker = `<span style="color:#1a6dcc;font-size:22px;font-weight:800;margin-right:8px;font-style:italic;">${num}.</span>`;
         li.innerHTML = marker + li.innerHTML;
       });
+    });
+  }
+  // For vivid theme: wrap h1/h2 text in a gradient-bg span (inline style for wechat compat)
+  if (themeSelect.value === 'vivid') {
+    root.querySelectorAll('h1,h2').forEach(h => {
+      const size = h.tagName === 'H1' ? '22px' : '19px';
+      h.setAttribute('style',
+        `font-size:${size};line-height:1.5;font-weight:800;margin:${h.tagName === 'H1' ? '36px' : '32px'} 0 ${h.tagName === 'H1' ? '22px' : '20px'};` +
+        `color:#fff;text-align:center;background:#8b5cf6;border-radius:10px;padding:${h.tagName === 'H1' ? '10px 20px' : '8px 18px'};display:block;`
+      );
     });
   }
   return root.outerHTML;
