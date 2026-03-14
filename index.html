@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Markdown 转微信公众号格式 | WeChat-MP</title>
+  <title>Markdown 转微信公众号格式 | MarkNice</title>
   <link rel="stylesheet" href="./src/styles.css" />
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 </head>
@@ -20,7 +20,7 @@
             <line x1="9" y1="17" x2="13" y2="17" stroke="currentColor" stroke-width="1.5"/>
           </svg>
         </div>
-        <span class="logo-text">WeChat-MP</span>
+        <span class="logo-text">MarkNice</span>
       </a>
       <div class="nav-actions">
         <button id="modeToggleBtn" class="nav-btn" title="切换主题">
@@ -149,7 +149,12 @@
               <span id="fontSizeLabel" class="font-size-label">0</span>
               <button id="fontSizeUp" class="font-size-btn" title="放大字号">+</button>
             </div>
-            <button id="convertBtn" class="toolbar-btn">转换</button>
+            <label class="toolbar-label">段距</label>
+            <div class="font-size-ctrl">
+              <button id="paraSpacingDown" class="font-size-btn" title="减小段距">−</button>
+              <span id="paraSpacingLabel" class="font-size-label">0</span>
+              <button id="paraSpacingUp" class="font-size-btn" title="增大段距">+</button>
+            </div>
             <!-- Preview mode toggle -->
             <div class="preview-mode-toggle">
               <button id="desktopModeBtn" class="mode-btn active" title="桌面预览">
@@ -161,7 +166,7 @@
             </div>
             <button id="copyBtn" class="copy-btn">
               <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg>
-              一键复制到公众号
+              复制到公众号
             </button>
           </div>
           <!-- Preview container with phone frame -->

@@ -388,7 +388,7 @@ body[data-mode='dark'] .navbar.scrolled {
 }
 
 .toolbar-select {
-  padding: 6px 10px;
+  padding: 6px 4px;
   border: 1px solid var(--input-border);
   border-radius: 8px;
   background: var(--input-bg);
@@ -397,6 +397,7 @@ body[data-mode='dark'] .navbar.scrolled {
   outline: none;
   cursor: pointer;
   transition: border-color 0.2s;
+  max-width: 80px;
 }
 
 .toolbar-select:hover,
@@ -454,7 +455,7 @@ body[data-mode='dark'] .navbar.scrolled {
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
-  margin-left: auto;
+  white-space: nowrap;
 }
 
 .copy-btn:hover {
