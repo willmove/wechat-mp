@@ -43,6 +43,9 @@ const themes = {
   }},
   vivid: { section: 'font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;word-break:break-word;color:#333;', styles: {
     h1:'font-size:22px;line-height:1.5;font-weight:800;margin:36px 0 22px;color:#fff;text-align:center;background:linear-gradient(135deg,#7c5cfc,#b07cfc);border-radius:10px;padding:10px 20px;display:block;',h2:'font-size:19px;line-height:1.5;font-weight:800;margin:32px 0 20px;color:#fff;text-align:center;background:linear-gradient(135deg,#7c5cfc,#b07cfc);border-radius:8px;padding:8px 18px;display:block;',h3:'font-size:16px;line-height:1.6;font-weight:700;margin:28px 0 14px;color:#7c5cfc;border-left:4px solid #b07cfc;padding-left:10px;',h4:'font-size:15px;line-height:1.6;font-weight:700;margin:22px 0 10px;color:#7c5cfc;',p:'font-size:15px;line-height:2.1;margin:18px 0;color:#333;text-align:justify;letter-spacing:.2px;',strong:'color:#7c5cfc;font-weight:700;',blockquote:'margin:20px 0;padding:14px 18px;border-left:4px solid #b07cfc;background:#f5f0ff;color:#5a3fa0;font-size:14px;line-height:1.95;border-radius:0 10px 10px 0;',ul:'margin:16px 0;padding-left:22px;line-height:2.1;color:#333;font-size:15px;',ol:'margin:16px 0;padding-left:22px;line-height:2.1;color:#333;font-size:15px;',li:'margin:8px 0;',a:'color:#7c5cfc;text-decoration:none;border-bottom:1px solid #c4a8ff;',img:'max-width:100%;display:block;margin:24px auto;border-radius:10px;box-shadow:0 4px 16px rgba(124,92,252,.15);',pre:'background:#f5f0ff;border:1px solid #ddd0ff;border-radius:8px;padding:14px;overflow:auto;line-height:1.65;font-size:12px;',code:'background:#ede8ff;padding:2px 6px;border-radius:4px;font-size:90%;font-family:Menlo,Consolas,monospace;color:#7c5cfc;',table:'border-collapse:collapse;width:100%;margin:16px 0;font-size:13px;',th:'border:1px solid #ddd0ff;padding:10px;background:#f0ebff;text-align:left;color:#5a3fa0;',td:'border:1px solid #ddd0ff;padding:10px;',hr:'border:none;border-top:2px dashed #c4a8ff;margin:28px 0;'
+  }},
+  amber: { section: 'font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;word-break:break-word;color:#2c2c2c;', styles: {
+    h1:'font-size:20px;line-height:1.6;font-weight:800;margin:40px 0 28px;color:#fff;text-align:center;background:#c8722a;border-radius:8px;padding:10px 28px;display:inline-block;width:auto;',h2:'font-size:18px;line-height:1.6;font-weight:800;margin:36px 0 24px;color:#fff;text-align:center;background:#c8722a;border-radius:8px;padding:8px 24px;display:inline-block;width:auto;',h3:'font-size:16px;line-height:1.6;font-weight:700;margin:30px 0 18px;color:#c8722a;font-weight:700;',h4:'font-size:15px;line-height:1.6;font-weight:700;margin:24px 0 14px;color:#c8722a;',h5:'font-size:14px;line-height:1.6;font-weight:700;margin:20px 0 12px;color:#c8722a;',h6:'font-size:13px;line-height:1.6;font-weight:700;margin:16px 0 10px;color:#c8722a;',p:'font-size:15px;line-height:2.0;margin:18px 0;color:#2c2c2c;text-align:justify;letter-spacing:.2px;',strong:'color:#c8722a;font-weight:700;',blockquote:'margin:20px 0;padding:14px 18px;border-left:4px solid #c8722a;background:#fdf5ec;color:#7a4010;font-size:14px;line-height:1.95;border-radius:0 8px 8px 0;',ul:'margin:16px 0;padding-left:22px;line-height:2.0;color:#2c2c2c;font-size:15px;',ol:'margin:16px 0;padding-left:8px;line-height:2.0;color:#2c2c2c;font-size:15px;list-style:none;',li:'margin:10px 0;',a:'color:#c8722a;text-decoration:none;border-bottom:1px solid #e8b07a;',img:'max-width:100%;display:block;margin:24px auto;border-radius:8px;',pre:'background:#fdf5ec;border:1px solid #f0d5b0;border-radius:8px;padding:14px;overflow:auto;line-height:1.65;font-size:12px;',code:'background:#faebd7;padding:2px 6px;border-radius:4px;font-size:90%;font-family:Menlo,Consolas,monospace;color:#a05a20;',table:'border-collapse:collapse;width:100%;margin:16px 0;font-size:13px;',th:'border:1px solid #f0d5b0;padding:10px;background:#fdf0e0;text-align:left;color:#7a4010;',td:'border:1px solid #f0d5b0;padding:10px;',hr:'border:none;border-top:1px solid #f0d5b0;margin:28px 0;'
   }}
 };
 
@@ -90,7 +93,24 @@ function sanitizeForWechat(html) {
   root.querySelectorAll('pre code').forEach(el => {
     el.setAttribute('style', 'background:none;padding:0;border-radius:0;font-size:inherit;font-family:Menlo,Consolas,monospace;');
   });
-  // For elegant theme: style ordered list numbers with colored counters
+  // For amber theme: center h1/h2 wrapper + colored ol numbers
+  if (themeSelect.value === 'amber') {
+    // Wrap h1/h2 in a centered div so inline-block centering works in WeChat
+    root.querySelectorAll('h1, h2').forEach(el => {
+      const wrapper = doc.createElement('div');
+      wrapper.setAttribute('style', 'text-align:center;margin:0;padding:0;');
+      el.parentNode.insertBefore(wrapper, el);
+      wrapper.appendChild(el);
+    });
+    // Style ol items with amber numbered prefix
+    root.querySelectorAll('ol').forEach(ol => {
+      ol.setAttribute('style', (ol.getAttribute('style') || '') + ';list-style:none;padding-left:0;');
+      ol.querySelectorAll(':scope > li').forEach((li, i) => {
+        const marker = `<span style="color:#c8722a;font-weight:700;">${i + 1}、</span>`;
+        li.innerHTML = marker + li.innerHTML;
+      });
+    });
+  }
   if (themeSelect.value === 'elegant') {
     root.querySelectorAll('ol').forEach(ol => {
       ol.setAttribute('style', (ol.getAttribute('style') || '') + ';list-style:none;padding-left:8px;');
