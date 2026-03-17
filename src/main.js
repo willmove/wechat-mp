@@ -13,6 +13,36 @@ const modeToggleBtn = document.getElementById('modeToggleBtn');
 
 marked.setOptions({ breaks: true, gfm: true });
 
+// Math extension for marked: handle $$...$$ (block) and $...$ (inline)
+marked.use({
+  extensions: [
+    {
+      name: 'mathBlock',
+      level: 'block',
+      start: function(src) { var m = src.match(/\$\$/); return m ? m.index : -1; },
+      tokenizer: function(src) {
+        var match = src.match(/^\$\$([\s\S]+?)\$\$/);
+        if (match) return { type: 'mathBlock', raw: match[0], tex: match[1].trim() };
+      },
+      renderer: function(token) {
+        return '<div class="math-block">\\[' + token.tex + '\\]</div>';
+      }
+    },
+    {
+      name: 'mathInline',
+      level: 'inline',
+      start: function(src) { var m = src.match(/\$/); return m ? m.index : -1; },
+      tokenizer: function(src) {
+        var match = src.match(/^\$([^\$\n]+?)\$/);
+        if (match) return { type: 'mathInline', raw: match[0], tex: match[1].trim() };
+      },
+      renderer: function(token) {
+        return '<span class="math-inline">\\(' + token.tex + '\\)</span>';
+      }
+    }
+  ]
+});
+
 const themes = {
   simple: { section: 'font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;word-break:break-word;color:#222;', styles: {
     h1:'font-size:24px;line-height:1.6;font-weight:700;margin:24px 0 16px;color:#111;',h2:'font-size:20px;line-height:1.6;font-weight:700;margin:22px 0 14px;color:#111;',h3:'font-size:17px;line-height:1.6;font-weight:700;margin:20px 0 12px;color:#222;',h4:'font-size:15px;line-height:1.6;font-weight:700;margin:16px 0 10px;color:#222;',h5:'font-size:14px;line-height:1.6;font-weight:700;margin:14px 0 8px;color:#333;',h6:'font-size:13px;line-height:1.6;font-weight:700;margin:12px 0 8px;color:#333;',p:'font-size:14px;line-height:1.85;margin:10px 0;color:#222;text-align:justify;',blockquote:'margin:14px 0;padding:10px 14px;border-left:4px solid #3e7bfa;background:#f4f7ff;color:#3a4a77;font-size:13px;line-height:1.8;',ul:'margin:10px 0;padding-left:24px;line-height:1.85;color:#222;font-size:14px;',ol:'margin:10px 0;padding-left:24px;line-height:1.85;color:#222;font-size:14px;',li:'margin:6px 0;',a:'color:#276ef1;text-decoration:none;border-bottom:1px solid #8eb2ff;',img:'max-width:100%;display:block;margin:16px auto;border-radius:6px;',pre:'background:#f6f8fa;border:1px solid #e2e8f0;border-radius:8px;padding:12px;overflow:auto;line-height:1.6;font-size:12px;',code:'background:#f1f4f8;padding:2px 5px;border-radius:4px;font-size:90%;font-family:Menlo,Consolas,monospace;',table:'border-collapse:collapse;width:100%;margin:12px 0;font-size:12px;',th:'border:1px solid #d9e2f0;padding:8px;background:#f7faff;text-align:left;',td:'border:1px solid #d9e2f0;padding:8px;',hr:'border:none;border-top:1px solid #dbe3ef;margin:24px 0;'
@@ -85,7 +115,11 @@ function sanitizeForWechat(html) {
   root.querySelectorAll('*').forEach(el => {
     [...el.attributes].forEach(attr => {
       const n = attr.name.toLowerCase();
-      if (n.startsWith('on') || n === 'class' || n === 'id') el.removeAttribute(attr.name);
+      if (n.startsWith('on') || n === 'id') el.removeAttribute(attr.name);
+      if (n === 'class') {
+        const cls = el.getAttribute('class') || '';
+        if (cls !== 'math-inline' && cls !== 'math-block') el.removeAttribute(attr.name);
+      }
     });
   });
   applyInlineStyles(root, theme.styles, offset);
@@ -134,11 +168,24 @@ function sanitizeForWechat(html) {
   return root.outerHTML;
 }
 
+function renderMath(container) {
+  if (typeof katex === 'undefined') return;
+  container.querySelectorAll('.math-block').forEach(function(el) {
+    var tex = el.textContent.replace(/^\\\[/, '').replace(/\\\]$/, '').trim();
+    try { el.innerHTML = katex.renderToString(tex, { displayMode: true, throwOnError: false }); } catch(e) {}
+  });
+  container.querySelectorAll('.math-inline').forEach(function(el) {
+    var tex = el.textContent.replace(/^\\\(/, '').replace(/\\\)$/, '').trim();
+    try { el.innerHTML = katex.renderToString(tex, { displayMode: false, throwOnError: false }); } catch(e) {}
+  });
+}
+
 function render() {
   const md = markdownEl.value || '';
   const html = sanitizeForWechat(marked.parse(md));
   previewEl.innerHTML = html;
-  previewEl.dataset.html = html;
+  renderMath(previewEl);
+  previewEl.dataset.html = previewEl.innerHTML;
   statusEl.textContent = md.trim()
     ? `已转换（${themeSelect.options[themeSelect.selectedIndex].text}｜字号 ${fontSizeOffset >= 0 ? '+' : ''}${fontSizeOffset}｜段距 ${paraSpacingOffset >= 0 ? '+' : ''}${paraSpacingOffset}）`
     : '';
@@ -262,6 +309,156 @@ fileInput.addEventListener('change', async (e) => {
   if (!file) return;
   markdownEl.value = await file.text();
   render();
+});
+
+// ===== HTML to Markdown converter =====
+function htmlToMarkdown(html) {
+  const doc = new DOMParser().parseFromString(html, 'text/html');
+
+  function processNode(node) {
+    if (node.nodeType === Node.TEXT_NODE) return node.textContent;
+    if (node.nodeType !== Node.ELEMENT_NODE) return '';
+    const tag = node.tagName.toLowerCase();
+    const children = Array.from(node.childNodes).map(processNode).join('');
+    switch (tag) {
+      case 'h1': return '# ' + children.trim() + '\n\n';
+      case 'h2': return '## ' + children.trim() + '\n\n';
+      case 'h3': return '### ' + children.trim() + '\n\n';
+      case 'h4': return '#### ' + children.trim() + '\n\n';
+      case 'h5': return '##### ' + children.trim() + '\n\n';
+      case 'h6': return '###### ' + children.trim() + '\n\n';
+      case 'p': return children.trim() + '\n\n';
+      case 'br': return '\n';
+      case 'strong': case 'b': return '**' + children.trim() + '**';
+      case 'em': case 'i': return '*' + children.trim() + '*';
+      case 'u': return '<u>' + children.trim() + '</u>';
+      case 's': case 'strike': case 'del': return '~~' + children.trim() + '~~';
+      case 'sub': return '<sub>' + children.trim() + '</sub>';
+      case 'sup': return '<sup>' + children.trim() + '</sup>';
+      case 'a': {
+        const href = node.getAttribute('href') || '';
+        const text = children.trim();
+        if (!text && !href) return '';
+        if (!href) return text;
+        return '[' + text + '](' + href + ')';
+      }
+      case 'img': {
+        const src = node.getAttribute('src') || '';
+        const alt = node.getAttribute('alt') || '';
+        return '![' + alt + '](' + src + ')\n\n';
+      }
+      case 'ul': return children + '\n';
+      case 'ol': return children + '\n';
+      case 'li': {
+        const parent = node.parentElement;
+        const isOl = parent && parent.tagName.toLowerCase() === 'ol';
+        const idx = isOl ? Array.from(parent.children).indexOf(node) + 1 : 0;
+        const prefix = isOl ? idx + '. ' : '- ';
+        return prefix + children.trim() + '\n';
+      }
+      case 'blockquote': {
+        const lines = children.trim().split('\n');
+        return lines.map(function(l) { return '> ' + l; }).join('\n') + '\n\n';
+      }
+      case 'pre': return '```\n' + node.textContent.trim() + '\n```\n\n';
+      case 'code': {
+        if (node.parentElement && node.parentElement.tagName.toLowerCase() === 'pre') return children;
+        return '`' + children.trim() + '`';
+      }
+      case 'hr': return '---\n\n';
+      case 'table': return processTable(node);
+      case 'span': {
+        if (node.classList && node.classList.contains('math-inline')) {
+          var tex = node.textContent.replace(/^\\\(/, '').replace(/\\\)$/, '').trim();
+          return tex ? ('$' + tex + '$') : children;
+        }
+        return children;
+      }
+      case 'div': {
+        if (node.classList && node.classList.contains('math-block')) {
+          var tex = node.textContent.replace(/^\\\[/, '').replace(/\\\]$/, '').trim();
+          return tex ? ('$$' + tex + '$$\n\n') : children;
+        }
+        return children;
+      }
+      default: return children;
+    }
+  }
+
+  function processTable(table) {
+    const rows = Array.from(table.querySelectorAll(':scope > tr, :scope > thead > tr, :scope > tbody > tr'));
+    if (!rows.length) return '';
+    let hasMerge = false;
+    rows.forEach(function(row) {
+      row.querySelectorAll('th, td').forEach(function(cell) {
+        if (parseInt(cell.getAttribute('colspan') || '1', 10) > 1 ||
+            parseInt(cell.getAttribute('rowspan') || '1', 10) > 1) hasMerge = true;
+      });
+    });
+    if (hasMerge) {
+      let html = '<table>\n';
+      rows.forEach(function(row) {
+        html += '<tr>';
+        row.querySelectorAll('th, td').forEach(function(cell) {
+          const tag = cell.tagName.toLowerCase();
+          const cs = cell.getAttribute('colspan');
+          const rs = cell.getAttribute('rowspan');
+          let attrs = '';
+          if (cs && cs !== '1') attrs += ' colspan="' + cs + '"';
+          if (rs && rs !== '1') attrs += ' rowspan="' + rs + '"';
+          html += '<' + tag + attrs + '>' + cell.textContent.trim() + '</' + tag + '>';
+        });
+        html += '</tr>\n';
+      });
+      html += '</table>\n\n';
+      return html;
+    }
+    let md = '';
+    rows.forEach(function(row, ri) {
+      const cells = Array.from(row.querySelectorAll('th, td'));
+      md += '| ' + cells.map(function(c) { return c.textContent.trim(); }).join(' | ') + ' |\n';
+      if (ri === 0) md += '| ' + cells.map(function() { return '---'; }).join(' | ') + ' |\n';
+    });
+    return md + '\n';
+  }
+
+  const result = processNode(doc.body);
+  return result.replace(/\n{3,}/g, '\n\n').trim() + '\n';
+}
+
+// ===== Word (.docx) import =====
+const wordFileInput = document.getElementById('wordFileInput');
+wordFileInput.addEventListener('change', async (e) => {
+  const file = e.target.files?.[0];
+  if (!file) return;
+  statusEl.textContent = '正在导入 Word 文档…';
+  try {
+    const arrayBuffer = await file.arrayBuffer();
+    const html = await window.parseDocx(arrayBuffer);
+    const markdown = htmlToMarkdown(html);
+    markdownEl.value = markdown;
+    render();
+    statusEl.textContent = '已导入 Word 文档';
+  } catch (err) {
+    console.error(err);
+    statusEl.textContent = '导入失败，请确认文件为 .docx 格式';
+  }
+  wordFileInput.value = '';
+});
+
+// ===== Save as HTML =====
+document.getElementById('saveHtmlBtn').addEventListener('click', () => {
+  const html = previewEl.dataset.html || '';
+  if (!html.trim()) return (statusEl.textContent = '请先输入并转换内容');
+  const fullHtml = '<!DOCTYPE html>\n<html lang="zh-CN">\n<head>\n<meta charset="UTF-8">\n<meta name="viewport" content="width=device-width, initial-scale=1.0">\n<title>导出内容</title>\n</head>\n<body>\n' + html + '\n</body>\n</html>';
+  const blob = new Blob([fullHtml], { type: 'text/html;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'export.html';
+  a.click();
+  URL.revokeObjectURL(url);
+  statusEl.textContent = '已保存为 HTML 文件';
 });
 
 render();
