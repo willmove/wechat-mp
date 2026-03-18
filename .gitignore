@@ -1,3 +1,6 @@
 .vscode/
 .DS_Store
 Thumbs.db
+
+# 临时文档（不纳入开源）
+article/

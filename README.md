@@ -38,10 +38,14 @@ marknice/
 纯静态项目，用任意 HTTP 服务器打开即可：
 
 ```bash
-# Python
+# 1. Clone 仓库到本地并进入该目录
+git clone https://github.com/willmove/marknice.git
+cd marknice
+
+# 2.使用 Python 内置HTTP服务器
 python3 -m http.server 8080
 
-# Node.js
+# 2. 或使用 Node.js 的HTTP服务器
 npx serve .
 ```
 
