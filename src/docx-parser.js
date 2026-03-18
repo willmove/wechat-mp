@@ -221,13 +221,17 @@ async function parseDocx(arrayBuffer) {
     var is = String(ilvl), aid = numToAbstract[numId];
     if (!aid) return '';
     var levels = abstractNums[aid]; if (!levels) return '';
+    var ld = levels[is]; if (!ld) return '';
+
+    // Bullet lists: don't increment counters, return special marker
+    if (ld.numFmt === 'bullet') return '\x00BULLET';
+
     if (!numCounters[numId]) numCounters[numId] = {};
     var ov = numToAbstract['_ov_'+numId];
     if (numCounters[numId][is] === undefined) {
-      numCounters[numId][is] = (ov&&ov[is]) ? ov[is].start : (levels[is]?levels[is].start:1);
+      numCounters[numId][is] = (ov&&ov[is]) ? ov[is].start : (ld.start||1);
     } else { numCounters[numId][is]++; }
     for (var i=ilvl+1;i<=8;i++) delete numCounters[numId][String(i)];
-    var ld = levels[is]; if (!ld) return '';
     var pfx = ld.lvlText || '';
     if (pfx) {
       for (var j=0;j<=ilvl;j++) {
@@ -268,8 +272,36 @@ async function parseDocx(arrayBuffer) {
   }
 
   // ===== Process paragraph content into HTML =====
+  // Helper: extract formatting flags from rPr
+  function _getRunFmt(rPr) {
+    if (!rPr) return { b: false, i: false, u: false, s: false, va: '' };
+    var bNode = _qn(rPr, 'b');
+    var bVal = bNode ? _attr(bNode, 'val') : null;
+    var bold = bNode ? (bVal !== 'false' && bVal !== '0') : false;
+    var iNode = _qn(rPr, 'i');
+    var iVal = iNode ? _attr(iNode, 'val') : null;
+    var italic = iNode ? (iVal !== 'false' && iVal !== '0') : false;
+    var uline = !!_qn(rPr, 'u');
+    var strike = !!_qn(rPr, 'strike');
+    var vAlign = _qn(rPr, 'vertAlign');
+    var va = vAlign ? (_attr(vAlign, 'val') || '') : '';
+    return { b: bold, i: italic, u: uline, s: strike, va: va };
+  }
+  function _fmtKey(f) { return (f.b?'B':'')+(f.i?'I':'')+(f.u?'U':'')+(f.s?'S':'')+f.va; }
+  function _wrapFmt(text, fmt) {
+    var s = text;
+    if (fmt.b) s = '<strong>' + s + '</strong>';
+    if (fmt.i) s = '<em>' + s + '</em>';
+    if (fmt.u) s = '<u>' + s + '</u>';
+    if (fmt.s) s = '<s>' + s + '</s>';
+    if (fmt.va === 'superscript') s = '<sup>' + s + '</sup>';
+    else if (fmt.va === 'subscript') s = '<sub>' + s + '</sub>';
+    return s;
+  }
+
   async function processParagraphContent(p) {
-    var html = '';
+    // Collect segments: each is { text, fmt, raw } where raw is pre-formatted HTML (non-run content)
+    var segments = [];
     var fieldInstr = '', fieldResult = '', inField = false, fieldDepth = 0;
 
     for (var ch = p.firstChild; ch; ch = ch.nextSibling) {
@@ -285,7 +317,8 @@ async function parseDocx(arrayBuffer) {
           fieldDepth--;
           if (fieldDepth <= 0) {
             inField = false;
-            html += processField(fieldInstr, fieldResult);
+            var fr = processField(fieldInstr, fieldResult);
+            if (fr) segments.push({ raw: fr });
           }
         }
         continue;
@@ -301,15 +334,15 @@ async function parseDocx(arrayBuffer) {
         for (var lc = ch.firstChild; lc; lc = lc.nextSibling) {
           if (lc.nodeType === 1 && lc.localName === 'r') linkText += getRunText(lc);
         }
-        if (href) html += '<a href="' + escapeHtml(href) + '">' + escapeHtml(linkText) + '</a>';
-        else html += escapeHtml(linkText);
+        if (href) segments.push({ raw: '<a href="' + escapeHtml(href) + '">' + escapeHtml(linkText) + '</a>' });
+        else segments.push({ raw: escapeHtml(linkText) });
         continue;
       }
 
       // --- OMML math (inline) ---
       if (ln === 'oMath') {
         var latex = ommlToLatex(ch);
-        if (latex) html += '<span class="math-inline">\\(' + latex + '\\)</span>';
+        if (latex) segments.push({ raw: '<span class="math-inline">\\(' + latex + '\\)</span>' });
         continue;
       }
 
@@ -318,51 +351,52 @@ async function parseDocx(arrayBuffer) {
         var rPr = _qn(ch, 'rPr');
         var text = getRunText(ch);
         if (!text) {
-          // Check for drawing/image
           var drawing = _qn(ch, 'drawing');
-          if (drawing) { html += await processDrawing(drawing); continue; }
+          if (drawing) { var imgHtml = await processDrawing(drawing); if (imgHtml) segments.push({ raw: imgHtml }); continue; }
           var pict = _qn(ch, 'pict');
-          if (pict) { /* skip VML for now */ continue; }
+          if (pict) continue;
           continue;
         }
-        var escaped = escapeHtml(text);
-        // Apply formatting
-        if (rPr) {
-          if (_qn(rPr, 'b') && _attr(_qn(rPr, 'b'), 'val') !== 'false' && _attr(_qn(rPr, 'b'), 'val') !== '0')
-            escaped = '<strong>' + escaped + '</strong>';
-          else if (_qn(rPr, 'b') && !_attr(_qn(rPr, 'b'), 'val'))
-            escaped = '<strong>' + escaped + '</strong>';
-          if (_qn(rPr, 'i') && _attr(_qn(rPr, 'i'), 'val') !== 'false' && _attr(_qn(rPr, 'i'), 'val') !== '0')
-            escaped = '<em>' + escaped + '</em>';
-          else if (_qn(rPr, 'i') && !_attr(_qn(rPr, 'i'), 'val'))
-            escaped = '<em>' + escaped + '</em>';
-          if (_qn(rPr, 'u')) escaped = '<u>' + escaped + '</u>';
-          if (_qn(rPr, 'strike')) escaped = '<s>' + escaped + '</s>';
-          var vAlign = _qn(rPr, 'vertAlign');
-          if (vAlign) {
-            var va = _attr(vAlign, 'val');
-            if (va === 'superscript') escaped = '<sup>' + escaped + '</sup>';
-            else if (va === 'subscript') escaped = '<sub>' + escaped + '</sub>';
-          }
-        }
-        html += escaped;
+        var fmt = _getRunFmt(rPr);
+        segments.push({ text: escapeHtml(text), fmt: fmt });
         continue;
       }
 
-      // --- Bookmark start/end (skip) ---
       if (ln === 'bookmarkStart' || ln === 'bookmarkEnd') continue;
 
-      // --- Sub-paragraphs in structured doc tags ---
       if (ln === 'sdt') {
         var sdtContent = _qn(ch, 'sdtContent');
         if (sdtContent) {
           var innerPs = _qnAll(sdtContent, 'p');
           for (var ip = 0; ip < innerPs.length; ip++) {
-            html += await processParagraphContent(innerPs[ip]);
+            var innerHtml = await processParagraphContent(innerPs[ip]);
+            if (innerHtml) segments.push({ raw: innerHtml });
           }
         }
         continue;
       }
+    }
+
+    // Merge adjacent segments with same formatting, then wrap
+    var html = '';
+    var i = 0;
+    while (i < segments.length) {
+      var seg = segments[i];
+      if (seg.raw !== undefined) {
+        html += seg.raw;
+        i++;
+        continue;
+      }
+      // Text segment — merge with following same-format text segments
+      var merged = seg.text;
+      var key = _fmtKey(seg.fmt);
+      var j = i + 1;
+      while (j < segments.length && segments[j].text !== undefined && segments[j].raw === undefined && _fmtKey(segments[j].fmt) === key) {
+        merged += segments[j].text;
+        j++;
+      }
+      html += _wrapFmt(merged, seg.fmt);
+      i = j;
     }
     return html;
   }
@@ -440,7 +474,8 @@ async function parseDocx(arrayBuffer) {
             var cilvl = parseInt(_attr(_qn(cpNumPr, 'ilvl'), 'val') || '0', 10);
             if (cnid && cnid !== '0') {
               var cpfx = resolveNumbering(cnid, cilvl);
-              if (cpfx) cellText = cpfx + ' ' + cellText;
+              if (cpfx === '\x00BULLET') cellText = '• ' + cellText;
+              else if (cpfx) cellText = cpfx + ' ' + cellText;
             }
           }
 
@@ -584,7 +619,9 @@ async function parseDocx(arrayBuffer) {
       } else if (numId && numId !== '0') {
         // List item with numbering
         var listPrefix = resolveNumbering(numId, ilvl);
-        if (listPrefix) {
+        if (listPrefix === '\x00BULLET') {
+          output += '<ul><li>' + content + '</li></ul>';
+        } else if (listPrefix) {
           output += '<p>' + listPrefix + ' ' + content + '</p>';
         } else {
           output += '<p>' + content + '</p>';

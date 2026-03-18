@@ -423,7 +423,16 @@ function htmlToMarkdown(html) {
   }
 
   const result = processNode(doc.body);
-  return result.replace(/\n{3,}/g, '\n\n').trim() + '\n';
+  var merged = result.replace(/\n{3,}/g, '\n\n');
+  // Merge adjacent bold markers: **A** **B** or **A****B** → **A B** or **AB**
+  for (var _m = 0; _m < 5; _m++) {
+    merged = merged.replace(/\*\*([^*]+?)\*\*( ?)\*\*([^*]+?)\*\*/g, '**$1$2$3**');
+  }
+  // Merge adjacent italic markers: *A* *B* or *A**B* → *A B* or *AB*
+  for (var _n = 0; _n < 5; _n++) {
+    merged = merged.replace(/(?<!\*)\*([^*]+?)\*( ?)\*([^*]+?)\*(?!\*)/g, '*$1$2$3*');
+  }
+  return merged.trim() + '\n';
 }
 
 // ===== Word (.docx) import =====
