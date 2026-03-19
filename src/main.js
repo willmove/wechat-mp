@@ -470,6 +470,42 @@ document.getElementById('saveHtmlBtn').addEventListener('click', () => {
   statusEl.textContent = '已保存为 HTML 文件';
 });
 
+// ===== Save as PDF =====
+document.getElementById('savePdfBtn').addEventListener('click', () => {
+  const html = previewEl.dataset.html || '';
+  if (!html.trim()) return (statusEl.textContent = '请先输入并转换内容');
+  statusEl.textContent = '正在准备 PDF…';
+  const iframe = document.createElement('iframe');
+  iframe.style.cssText = 'position:fixed;left:-9999px;top:0;width:800px;height:600px;border:none;';
+  document.body.appendChild(iframe);
+  const doc = iframe.contentDocument || iframe.contentWindow.document;
+  doc.open();
+  doc.write('<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8">' +
+    '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">' +
+    '<style>' +
+    'body{margin:0;padding:30px 40px;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;font-size:15px;line-height:1.8;color:#333}' +
+    'h1{font-size:24px;margin:20px 0 10px}h2{font-size:20px;margin:18px 0 8px}h3{font-size:17px;margin:14px 0 6px}' +
+    'p{margin:8px 0}img{max-width:100%}' +
+    'table{border-collapse:collapse;width:100%;margin:10px 0}td,th{border:1px solid #ccc;padding:6px 10px}th{background:#f5f5f5}' +
+    'blockquote{margin:10px 0;padding:8px 16px;border-left:4px solid #ddd;color:#666}' +
+    'pre{background:#f6f6f6;padding:12px;border-radius:4px;overflow-x:auto}code{font-size:13px}' +
+    '@media print{body{padding:0 20px}@page{margin:15mm 10mm}}' +
+    '</style></head><body>' + html + '</body></html>');
+  doc.close();
+  iframe.contentWindow.onafterprint = () => {
+    document.body.removeChild(iframe);
+  };
+  // Wait for content (especially KaTeX CSS) to load before printing
+  setTimeout(() => {
+    iframe.contentWindow.print();
+    statusEl.textContent = '请在打印对话框中选择"另存为 PDF"';
+    // Fallback cleanup if onafterprint doesn't fire
+    setTimeout(() => {
+      if (iframe.parentNode) document.body.removeChild(iframe);
+    }, 60000);
+  }, 500);
+});
+
 render();
 
 // ===== Phone/Desktop preview mode toggle =====
