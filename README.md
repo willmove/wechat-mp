@@ -12,6 +12,7 @@ Markdown / Word 转微信公众号排版格式的 Web 应用。
 - 一键复制富文本（`text/html` + `text/plain`），直接粘贴到公众号编辑器
 - 另存为 HTML 文件
 - 保存为 PDF 文件（通过打印对话框，文字可选可复制）
+- 保存为 Word 文档（.docx 格式，保留格式和样式）
 - 桌面 / 手机预览模式切换
 - 深色 / 浅色主题，支持跟随系统
 - 移动端触屏优化
@@ -22,7 +23,7 @@ Markdown / Word 转微信公众号排版格式的 Web 应用。
 marknice/
 ├── index.html            # 入口页面
 ├── src/
-│   ├── main.js           # 业务逻辑（转换、模板、复制、Word 导入、HTML 导出）
+│   ├── main.js           # 业务逻辑（转换、模板、复制、Word 导入、HTML/PDF/Word 导出）
 │   ├── docx-parser.js    # 自定义 DOCX 解析器（编号、合并单元格、公式、图片）
 │   └── styles.css        # 页面样式（含移动端响应式）
 └── README.md
@@ -33,6 +34,7 @@ marknice/
 - [marked](https://github.com/markedjs/marked) — Markdown 解析
 - [JSZip](https://stuk.github.io/jszip/) — DOCX 文件解压
 - [KaTeX](https://katex.org/) — 数学公式渲染
+- [html-docx-js](https://github.com/evidenceprime/html-docx-js) — HTML 转 Word 文档
 
 ## 本地预览
 

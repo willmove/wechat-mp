@@ -482,6 +482,7 @@ document.getElementById('savePdfBtn').addEventListener('click', () => {
   doc.open();
   doc.write('<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8">' +
     '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">' +
+    '<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"><\/script>' +
     '<style>' +
     'body{margin:0;padding:30px 40px;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;font-size:15px;line-height:1.8;color:#333}' +
     'h1{font-size:24px;margin:20px 0 10px}h2{font-size:20px;margin:18px 0 8px}h3{font-size:17px;margin:14px 0 6px}' +
@@ -490,20 +491,160 @@ document.getElementById('savePdfBtn').addEventListener('click', () => {
     'blockquote{margin:10px 0;padding:8px 16px;border-left:4px solid #ddd;color:#666}' +
     'pre{background:#f6f6f6;padding:12px;border-radius:4px;overflow-x:auto}code{font-size:13px}' +
     '@media print{body{padding:0 20px}@page{margin:15mm 10mm}}' +
-    '</style></head><body>' + html + '</body></html>');
+    '</style></head><body>' + html + '<\/body></html>');
   doc.close();
+
   iframe.contentWindow.onafterprint = () => {
     document.body.removeChild(iframe);
   };
-  // Wait for content (especially KaTeX CSS) to load before printing
-  setTimeout(() => {
-    iframe.contentWindow.print();
-    statusEl.textContent = '请在打印对话框中选择"另存为 PDF"';
-    // Fallback cleanup if onafterprint doesn't fire
-    setTimeout(() => {
-      if (iframe.parentNode) document.body.removeChild(iframe);
-    }, 60000);
-  }, 500);
+
+  // Wait for KaTeX library to load, then render math and print
+  const checkKatexAndRender = () => {
+    const win = iframe.contentWindow;
+    if (typeof win.katex !== 'undefined') {
+      try {
+        // Render math formulas
+        const container = win.document.body;
+        container.querySelectorAll('.math-block').forEach(function(el) {
+          const tex = el.textContent.replace(/^\\\[/, '').replace(/\\\]$/, '').trim();
+          try {
+            el.innerHTML = win.katex.renderToString(tex, { displayMode: true, throwOnError: false });
+          } catch(e) {
+            console.error('KaTeX block render error:', e);
+          }
+        });
+        container.querySelectorAll('.math-inline').forEach(function(el) {
+          const tex = el.textContent.replace(/^\\\(/, '').replace(/\\\)$/, '').trim();
+          try {
+            el.innerHTML = win.katex.renderToString(tex, { displayMode: false, throwOnError: false });
+          } catch(e) {
+            console.error('KaTeX inline render error:', e);
+          }
+        });
+
+        // Wait a bit more for rendering to complete, then print
+        setTimeout(() => {
+          win.print();
+          statusEl.textContent = '请在打印对话框中选择"另存为 PDF"';
+          // Fallback cleanup if onafterprint doesn't fire
+          setTimeout(() => {
+            if (iframe.parentNode) document.body.removeChild(iframe);
+          }, 60000);
+        }, 300);
+      } catch (err) {
+        console.error('Error rendering math:', err);
+        statusEl.textContent = '准备 PDF 时出错：' + err.message;
+        if (iframe.parentNode) document.body.removeChild(iframe);
+      }
+    } else {
+      // KaTeX not loaded yet, wait and retry
+      setTimeout(checkKatexAndRender, 100);
+    }
+  };
+
+  // Start checking after initial delay to allow scripts to load
+  setTimeout(checkKatexAndRender, 500);
+});
+
+// ===== Save as Word =====
+document.getElementById('saveWordBtn').addEventListener('click', () => {
+  const html = previewEl.dataset.html || '';
+  if (!html.trim()) return (statusEl.textContent = '请先输入并转换内容');
+
+  try {
+    statusEl.textContent = '正在生成 Word 文档…';
+
+    // Prepare HTML content with proper structure for Word
+    const wordHtml = `
+      <!DOCTYPE html>
+      <html xmlns:o='urn:schemas-microsoft-com:office:office'
+            xmlns:w='urn:schemas-microsoft-com:office:word'
+            xmlns='http://www.w3.org/TR/REC-html40'>
+      <head>
+        <meta charset='utf-8'>
+        <title>Export</title>
+        <style>
+          body {
+            font-family: 'PingFang SC', 'Microsoft YaHei', SimHei, sans-serif;
+            font-size: 14px;
+            line-height: 1.8;
+            color: #333;
+          }
+          h1 { font-size: 24px; margin: 20px 0 10px; font-weight: bold; }
+          h2 { font-size: 20px; margin: 18px 0 8px; font-weight: bold; }
+          h3 { font-size: 17px; margin: 14px 0 6px; font-weight: bold; }
+          h4 { font-size: 15px; margin: 12px 0 6px; font-weight: bold; }
+          h5 { font-size: 14px; margin: 10px 0 6px; font-weight: bold; }
+          h6 { font-size: 13px; margin: 10px 0 6px; font-weight: bold; }
+          p { margin: 8px 0; }
+          ul, ol { margin: 10px 0; padding-left: 24px; }
+          li { margin: 6px 0; }
+          blockquote {
+            margin: 10px 0;
+            padding: 8px 16px;
+            border-left: 4px solid #ddd;
+            background: #f8f8f8;
+            color: #666;
+          }
+          table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 10px 0;
+          }
+          td, th {
+            border: 1px solid #ccc;
+            padding: 6px 10px;
+          }
+          th { background: #f5f5f5; font-weight: bold; }
+          pre {
+            background: #f6f6f6;
+            padding: 12px;
+            border-radius: 4px;
+            overflow-x: auto;
+            white-space: pre-wrap;
+          }
+          code {
+            font-family: Consolas, Monaco, 'Courier New', monospace;
+            font-size: 13px;
+          }
+          img { max-width: 100%; }
+          strong { font-weight: bold; }
+          em { font-style: italic; }
+          u { text-decoration: underline; }
+          s { text-decoration: line-through; }
+          a { color: #0066cc; text-decoration: underline; }
+        </style>
+      </head>
+      <body>
+        ${html}
+      </body>
+      </html>
+    `;
+
+    // Check if htmlDocx is available
+    if (typeof htmlDocx === 'undefined') {
+      statusEl.textContent = '错误：Word 导出库未加载';
+      return;
+    }
+
+    // Convert HTML to Word document
+    const converted = htmlDocx.asBlob(wordHtml);
+
+    // Create download link
+    const url = URL.createObjectURL(converted);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'export.docx';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    statusEl.textContent = '已保存为 Word 文档';
+  } catch (err) {
+    console.error('Word export error:', err);
+    statusEl.textContent = '保存失败：' + err.message;
+  }
 });
 
 render();
