@@ -127,10 +127,14 @@ function sanitizeForWechat(html) {
   root.querySelectorAll('pre code').forEach(el => {
     el.setAttribute('style', 'background:none;padding:0;border-radius:0;font-size:inherit;font-family:Menlo,Consolas,monospace;');
   });
-  // Insert LRM (U+200E) before inline <code> inside list items and table cells
+  // Insert LRM (U+200E) before inline <code> and <strong> inside list items and table cells
   // to prevent WeChat editor from breaking them into separate lines
   root.querySelectorAll('li code, td code, th code').forEach(el => {
     if (el.closest('pre')) return; // skip code blocks
+    el.parentNode.insertBefore(doc.createTextNode('\u200E'), el);
+  });
+  root.querySelectorAll('li strong, td strong, th strong, li b, td b, th b').forEach(el => {
+    if (el.previousSibling) return; // only first child (line-start bold)
     el.parentNode.insertBefore(doc.createTextNode('\u200E'), el);
   });
   // For amber theme: center h1/h2 wrapper + colored ol numbers
